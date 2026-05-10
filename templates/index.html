@@ -3,96 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Início</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f0f2f5; }
-    </style>
+    <title>Fluxo — Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-<nav class="navbar navbar-light bg-white shadow-sm px-4">
-    <span class="navbar-brand fw-bold">💰 Controle de Gastos</span>
-    <div>
-        <span class="text-muted me-3">Olá, {{ nome }}!</span>
-        <a href="/logout" class="btn btn-outline-danger btn-sm">Sair</a>
+<div class="app">
+    <div class="sidebar">
+        <div class="logo">
+            <div class="logo-dot"></div>
+            Fluxo
+        </div>
+
+        <a href="/" class="nav-item active">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+            <div class="nav-dot"></div>
+        </a>
+
+        <a href="/adicionar" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nova transação
+        </a>
+
+        <a href="/exportar" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar CSV
+        </a>
+
+        <div class="sidebar-bottom">
+            <div class="nav-item">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                {{ nome }}
+            </div>
+            <a href="/logout" class="nav-item danger">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Sair
+            </a>
+        </div>
     </div>
-</nav>
 
-<div class="container mt-4">
+    <div class="main">
+        <div class="header">
+            <div>
+                <div class="greeting">Olá, <span>{{ nome }}</span> </div>
+                <div class="sub">Aqui está o seu resumo financeiro</div>
+            </div>
+            <a href="/adicionar" class="add-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Adicionar
+            </a>
+        </div>
 
-    <!-- cards de resumo -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-white bg-success p-3">
-                <p class="mb-1 small">Total Receitas</p>
-                <h4>R$ {{ "%.2f"|format(total_receitas) }}</h4>
+        <!-- filtro de mes -->
+        <div class="month-filter">
+            {% set meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'] %}
+            {% for i in range(1, 13) %}
+                <a href="/?mes={{ i }}&ano={{ ano }}" class="month-btn {% if mes == i %}active{% endif %}">
+                    {{ meses[i-1] }}
+                </a>
+            {% endfor %}
+        </div>
+
+        <!-- cards -->
+        <div class="cards">
+            <div class="card receita">
+                <div class="card-label">Receitas</div>
+                <div class="card-value green">R$ {{ "%.2f"|format(total_receitas) }}</div>
+            </div>
+            <div class="card despesa">
+                <div class="card-label">Despesas</div>
+                <div class="card-value red">R$ {{ "%.2f"|format(total_despesas) }}</div>
+            </div>
+            <div class="card saldo">
+                <div class="card-label">Saldo</div>
+                <div class="card-value purple">R$ {{ "%.2f"|format(saldo) }}</div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-danger p-3">
-                <p class="mb-1 small">Total Despesas</p>
-                <h4>R$ {{ "%.2f"|format(total_despesas) }}</h4>
+
+        <div class="bottom">
+            <!-- lista de transacoes -->
+            <div class="transactions">
+                <div class="section-title">Transações do mês</div>
+
+                {% if transacoes %}
+                    {% for t in transacoes|reverse %}
+                    <div class="tx">
+                        <div class="tx-icon" style="background: {% if t.tipo == 'receita' %}rgba(74,222,128,0.1){% else %}rgba(255,107,107,0.1){% endif %}">
+                            {% if t.categoria == 'Alimentação' %}🍔
+                            {% elif t.categoria == 'Transporte' %}🚗
+                            {% elif t.categoria == 'Saúde' %}💊
+                            {% elif t.categoria == 'Lazer' %}🎮
+                            {% elif t.categoria == 'Educação' %}📚
+                            {% elif t.categoria == 'Moradia' %}🏠
+                            {% elif t.categoria == 'Salário' %}💼
+                            {% else %}💳{% endif %}
+                        </div>
+                        <div class="tx-info">
+                            <div class="tx-name">{{ t.descricao }}</div>
+                            <div class="tx-cat">{{ t.categoria }}</div>
+                        </div>
+                        <div style="text-align:right">
+                            <div class="tx-val {% if t.tipo == 'receita' %}pos{% else %}neg{% endif %}">
+                                {% if t.tipo == 'receita' %}+{% else %}-{% endif %} R$ {{ "%.2f"|format(t.valor) }}
+                            </div>
+                            <div class="tx-date">{{ t.data.strftime("%d/%m/%Y") }}</div>
+                        </div>
+                        <div class="tx-actions">
+                            <a href="/editar/{{ t.id }}" class="tx-btn">✏️</a>
+                            <a href="/deletar/{{ t.id }}" class="tx-btn del" onclick="return confirm('Deletar?')">✕</a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div style="font-size:40px">💸</div>
+                        <p>Nenhuma transação nesse mês.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- grafico animado -->
+            <div class="chart-panel">
+                <div class="section-title">Gastos por categoria</div>
+
+                {% if categorias_labels %}
+                <div style="position:relative; width:200px; height:200px; margin: 10px auto 20px;">
+                    <canvas id="donutChart"></canvas>
+                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center;">
+                        <div style="font-family:'Syne',sans-serif; font-weight:800; font-size:16px; color:#f0f0ff;">R$ {{ "%.0f"|format(total_despesas) }}</div>
+                        <div style="font-size:11px; color:#6b6b8a;">total gasto</div>
+                    </div>
+                </div>
+
+                <div class="legend">
+                    {% for i in range(categorias_labels|length) %}
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: {{ categorias_cores[i] }}"></div>
+                        <span class="legend-name">{{ categorias_labels[i] }}</span>
+                        <span class="legend-val">R$ {{ "%.0f"|format(categorias_valores[i]) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% else %}
+                <div class="empty-state" style="padding:60px 20px">
+                    <div style="font-size:40px">📊</div>
+                    <p>Adicione despesas para ver o gráfico.</p>
+                </div>
+                {% endif %}
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-primary p-3">
-                <p class="mb-1 small">Saldo</p>
-                <h4>R$ {{ "%.2f"|format(saldo) }}</h4>
-            </div>
-        </div>
     </div>
-
-    <!-- botão adicionar -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Suas transações</h5>
-        <a href="/adicionar" class="btn btn-primary btn-sm">+ Adicionar</a>
-    </div>
-
-    <!-- lista de transações -->
-    {% if transacoes %}
-    <div class="card shadow">
-        <table class="table table-hover mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Descrição</th>
-                    <th>Categoria</th>
-                    <th>Tipo</th>
-                    <th>Valor</th>
-                    <th>Data</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for t in transacoes %}
-                <tr>
-                    <td>{{ t.descricao }}</td>
-                    <td>{{ t.categoria }}</td>
-                    <td>
-                        {% if t.tipo == "receita" %}
-                            <span class="badge bg-success">Receita</span>
-                        {% else %}
-                            <span class="badge bg-danger">Despesa</span>
-                        {% endif %}
-                    </td>
-                    <td>R$ {{ "%.2f"|format(t.valor) }}</td>
-                    <td>{{ t.data.strftime("%d/%m/%Y") }}</td>
-                    <td>
-                        <a href="/deletar/{{ t.id }}" class="btn btn-outline-danger btn-sm"
-                           onclick="return confirm('Deletar essa transação?')">x</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="card shadow p-4 text-center text-muted">
-        <p>Nenhuma transação ainda. Clique em "+ Adicionar" pra começar!</p>
-    </div>
-    {% endif %}
-
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // só roda se tiver dados pra mostrar
+    var canvas = document.getElementById('donutChart');
+    if (canvas) {
+        var ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ categorias_labels | tojson }},
+                datasets: [{
+                    data: {{ categorias_valores | tojson }},
+                    backgroundColor: {{ categorias_cores | tojson }},
+                    borderWidth: 0,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                cutout: '70%',
+                animation: {
+                    animateRotate: true,
+                    duration: 1000,
+                    easing: 'easeInOutQuart'
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ' R$ ' + ctx.parsed.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
 
 </body>
 </html>
